@@ -1,0 +1,15 @@
+# Variables de entorno y secretos locales
+.env
+
+# Base de datos SQLite3 local y temporales
+db/*.sqlite3
+db/*.sqlite3-*
+
+# Carpetas de Bundler y gemas
+.bundle/
+vendor/bundle/
+
+# Registros y temporales de ejecución
+log/
+tmp/
+*.log

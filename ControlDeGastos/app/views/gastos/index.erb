@@ -1,0 +1,195 @@
+<% if aviso(params[:notice]) %>
+  <div class="toast-banner" role="status">
+    <span class="toast-dot"></span>
+    <span><%= h(aviso(params[:notice])) %></span>
+    <a href="/?mes=<%= h(@mes) %>" class="toast-dismiss">Cerrar</a>
+  </div>
+<% end %>
+
+<div class="workspace-grid">
+  <!-- Columna izquierda: tarjeta de registro rápido -->
+  <aside class="transfer-card" aria-labelledby="form-card-title">
+    <div class="transfer-card-header">
+      <div class="plus-circle" aria-hidden="true">+</div>
+      <div>
+        <h2 id="form-card-title" class="transfer-card-title">Registrar gasto</h2>
+        <p class="transfer-card-subtitle">Añade un movimiento al libro mensual</p>
+      </div>
+    </div>
+
+    <% if @gasto.errors.any? %>
+      <div class="alert-box" role="alert">
+        <p class="alert-title">Revisa los siguientes campos:</p>
+        <ul class="alert-list">
+          <% @gasto.errors.each do |error| %>
+            <li><%= h(error) %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <form action="/gastos" method="post" class="wt-form" novalidate>
+      <input type="hidden" name="mes" value="<%= h(@mes) %>">
+
+      <div class="wt-field">
+        <label for="descripcion" class="wt-label">Descripción</label>
+        <input type="text" id="descripcion" name="descripcion" class="wt-input"
+               placeholder="Ej. Supermercado, recibo de luz..." maxlength="180"
+               value="<%= h(@gasto.descripcion) %>" required>
+      </div>
+
+      <div class="wt-field-row">
+        <div class="wt-field">
+          <label for="monto" class="wt-label">Monto ($)</label>
+          <input type="number" id="monto" name="monto" class="wt-input tabular-nums"
+                 placeholder="0.00" step="0.01" min="0.01"
+                 value="<%= h(monto_input(@gasto)) %>" required>
+        </div>
+        <div class="wt-field">
+          <label for="fecha" class="wt-label">Fecha</label>
+          <input type="date" id="fecha" name="fecha" class="wt-input tabular-nums"
+                 value="<%= h(@gasto.fecha) %>" required>
+        </div>
+      </div>
+
+      <div class="wt-field">
+        <label for="categoria" class="wt-label">Categoría</label>
+        <select id="categoria" name="categoria" class="wt-select" required>
+          <% Gasto::CATEGORIAS.each do |categoria| %>
+            <option value="<%= h(categoria) %>" <%= 'selected' if @gasto.categoria == categoria %>><%= h(categoria) %></option>
+          <% end %>
+        </select>
+      </div>
+
+      <button type="submit" class="wt-btn-primary">Guardar gasto</button>
+    </form>
+
+    <% if @totales_por_mes.any? %>
+      <div class="mini-month-summary">
+        <span class="wt-label">Total por mes</span>
+        <ul class="mini-month-list">
+          <% @totales_por_mes.first(4).each do |mes, total| %>
+            <li>
+              <a href="/?mes=<%= h(mes) %>" class="mini-month-link <%= 'is-current' if @mes == mes %>">
+                <span><%= h(nombre_mes(mes)) %></span>
+                <span class="tabular-nums"><%= h(moneda(total)) %></span>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  </aside>
+
+  <!-- Columna derecha: resumen del mes + listado -->
+  <section class="details-drawer" aria-labelledby="drawer-heading">
+    <div class="drawer-header">
+      <div>
+        <span class="eyebrow-label">Resumen financiero</span>
+        <h1 id="drawer-heading" class="editorial-title"><%= h(nombre_mes(@mes)) %></h1>
+      </div>
+
+      <form action="/" method="get" class="month-filter-form">
+        <label for="mes-select" class="wt-label">Filtrar periodo</label>
+        <div class="month-filter-controls">
+          <select id="mes-select" name="mes" class="wt-select wt-select-compact" onchange="this.form.submit()">
+            <option value="<%= Gasto::TODOS %>" <%= 'selected' if @mes == Gasto::TODOS %>>Todos los meses</option>
+            <% @meses_disponibles.each do |mes| %>
+              <option value="<%= h(mes) %>" <%= 'selected' if @mes == mes %>><%= h(mes) %> — <%= h(nombre_mes(mes)) %></option>
+            <% end %>
+          </select>
+          <noscript><button type="submit" class="wt-btn-secondary">Aplicar</button></noscript>
+        </div>
+      </form>
+    </div>
+
+    <div class="bento-stats-grid">
+      <article class="bento-card bento-card-highlight">
+        <span class="bento-label">Total <%= @mes == Gasto::TODOS ? 'global' : "de #{h(@mes)}" %></span>
+        <p class="bento-value tabular-nums"><%= h(moneda(@total)) %></p>
+        <span class="bento-pill"><%= @gastos.size %> <%= @gastos.size == 1 ? 'movimiento' : 'movimientos' %></span>
+      </article>
+
+      <article class="bento-card">
+        <span class="bento-label">Categoría principal</span>
+        <% if @desglose.any? %>
+          <% categoria_top, monto_top = @desglose.first %>
+          <p class="bento-value-sm"><%= h(categoria_top) %></p>
+          <span class="bento-meta tabular-nums"><%= h(moneda(monto_top)) %> (<%= porcentaje(monto_top, @total) %> del periodo)</span>
+        <% else %>
+          <p class="bento-value-sm">Sin datos</p>
+          <span class="bento-meta">Registra tu primer gasto</span>
+        <% end %>
+      </article>
+
+      <article class="bento-card">
+        <span class="bento-label">Desglose por categoría</span>
+        <% if @desglose.any? %>
+          <ul class="category-breakdown-list">
+            <% @desglose.first(3).each do |categoria, subtotal| %>
+              <li class="category-breakdown-item">
+                <span><%= h(categoria) %></span>
+                <span class="category-amount tabular-nums"><%= h(moneda(subtotal)) %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <span class="bento-meta">No hay categorías en este periodo.</span>
+        <% end %>
+      </article>
+    </div>
+
+    <div class="files-list-card">
+      <div class="files-list-header">
+        <div>
+          <h2 class="files-list-title">Movimientos registrados</h2>
+          <p class="files-list-subtitle">Ordenados por fecha descendente</p>
+        </div>
+        <% if @mes != Gasto::TODOS %>
+          <a href="/?mes=<%= Gasto::TODOS %>" class="wt-link-action">Ver todos los meses</a>
+        <% end %>
+      </div>
+
+      <% if @gastos.empty? %>
+        <div class="empty-state">
+          <p class="empty-state-title">No hay gastos en este periodo</p>
+          <p class="empty-state-text">Añade uno desde la tarjeta de la izquierda o cambia el mes seleccionado.</p>
+        </div>
+      <% else %>
+        <div class="table-responsive">
+          <table class="wt-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Descripción</th>
+                <th>Categoría</th>
+                <th class="text-right">Monto</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @gastos.each do |gasto| %>
+                <tr>
+                  <td class="cell-date tabular-nums"><%= h(gasto.fecha) %></td>
+                  <td><span class="desc-primary"><%= h(gasto.descripcion) %></span></td>
+                  <td><span class="category-badge <%= badge_categoria(gasto.categoria) %>"><%= h(gasto.categoria) %></span></td>
+                  <td class="cell-amount text-right tabular-nums"><%= h(moneda(gasto.monto)) %></td>
+                  <td class="text-right">
+                    <div class="action-group">
+                      <a href="/gastos/<%= gasto.id %>/editar" class="wt-btn-ghost">Editar</a>
+                      <form action="/gastos/<%= gasto.id %>/eliminar" method="post" class="inline-delete-form"
+                            onsubmit="return confirm('¿Eliminar este gasto de forma permanente?');">
+                        <input type="hidden" name="mes" value="<%= h(@mes) %>">
+                        <button type="submit" class="wt-btn-danger-ghost">Eliminar</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
+  </section>
+</div>

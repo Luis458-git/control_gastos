@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Gastos Personales</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-canvas">
+    <header class="top-bar">
+      <a href="/" class="brand-lockup" aria-label="Inicio">
+        <span class="brand-mark">wt</span>
+        <div class="brand-text">
+          <span class="brand-title">Control de Gastos</span>
+          <span class="brand-subtitle">Personal Ledger · Sinatra</span>
+        </div>
+      </a>
+
+      <nav class="nav-pill" aria-label="Navegación">
+        <a href="/" class="nav-pill-item <%= 'is-active' if request.path_info == '/' %>">Movimientos</a>
+        <span class="nav-pill-divider" aria-hidden="true"></span>
+        <span class="nav-pill-meta">
+          <span class="status-dot"></span>
+          <%= Database.postgres? ? 'PostgreSQL' : 'SQLite3 Local' %>
+        </span>
+      </nav>
+    </header>
+
+    <main class="main-container">
+      <%= yield %>
+    </main>
+
+    <footer class="app-footer">
+      <span>Diseño inspirado en WeTransfer Web · Ruby + Sinatra + Puma</span>
+      <span class="tabular-nums">Hoy: <%= h(Date.today.iso8601) %></span>
+    </footer>
+  </div>
+</body>
+</html>
