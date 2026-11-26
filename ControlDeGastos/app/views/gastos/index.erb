@@ -1,74 +1,134 @@
 <% if aviso(params[:notice]) %>
-  <div class="toast-banner" role="status">
-    <span class="toast-dot"></span>
+  <div class="toast-banner animate-fade-down" role="status">
+    <span class="pulse-lime"></span>
     <span><%= h(aviso(params[:notice])) %></span>
-    <a href="/?mes=<%= h(@mes) %>" class="toast-dismiss">Cerrar</a>
+    <a href="/?mes=<%= h(@mes) %>" class="toast-dismiss">Cerrar ✕</a>
   </div>
 <% end %>
 
 <div class="workspace-grid">
-  <!-- Columna izquierda: tarjeta de registro rápido -->
-  <aside class="transfer-card" aria-labelledby="form-card-title">
-    <div class="transfer-card-header">
-      <div class="plus-circle" aria-hidden="true">+</div>
-      <div>
-        <h2 id="form-card-title" class="transfer-card-title">Registrar gasto</h2>
-        <p class="transfer-card-subtitle">Añade un movimiento al libro mensual</p>
+  <!-- COLUMNA IZQUIERDA: Tarjeta de Registro Rápido + Medidor de Presupuesto + Historial -->
+  <aside class="left-rail-stack animate-stagger-1">
+    <!-- 1. Tarjeta de registro de gasto -->
+    <div class="transfer-card" aria-labelledby="form-card-title">
+      <div class="transfer-card-header">
+        <div class="plus-circle" aria-hidden="true">+</div>
+        <div>
+          <h2 id="form-card-title" class="transfer-card-title">Nuevo movimiento</h2>
+          <p class="transfer-card-subtitle">Registro instantáneo en tu libro</p>
+        </div>
       </div>
+
+      <% if @gasto.errors.any? %>
+        <div class="alert-box" role="alert">
+          <p class="alert-title">Revisa los siguientes campos:</p>
+          <ul class="alert-list">
+            <% @gasto.errors.each do |error| %>
+              <li><%= h(error) %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <form action="/gastos" method="post" class="wt-form" novalidate>
+        <input type="hidden" name="mes" value="<%= h(@mes) %>">
+
+        <div class="wt-field">
+          <label for="descripcion" class="wt-label">Concepto o comercio</label>
+          <input type="text" id="descripcion" name="descripcion" class="wt-input"
+                 placeholder="Ej. Café de especialidad, Uber, Luz..." maxlength="180"
+                 value="<%= h(@gasto.descripcion) %>" required>
+        </div>
+
+        <div class="wt-field-row">
+          <div class="wt-field">
+            <label for="monto" class="wt-label">Monto ($)</label>
+            <input type="number" id="monto" name="monto" class="wt-input tabular-nums"
+                   placeholder="0.00" step="0.01" min="0.01"
+                   value="<%= h(monto_input(@gasto)) %>" required>
+          </div>
+          <div class="wt-field">
+            <label for="fecha" class="wt-label">Fecha</label>
+            <input type="date" id="fecha" name="fecha" class="wt-input tabular-nums"
+                   value="<%= h(@gasto.fecha) %>" required>
+          </div>
+        </div>
+
+        <div class="wt-field-row">
+          <div class="wt-field">
+            <label for="categoria" class="wt-label">Categoría</label>
+            <select id="categoria" name="categoria" class="wt-select" required>
+              <% Gasto::CATEGORIAS.each do |categoria| %>
+                <option value="<%= h(categoria) %>" <%= 'selected' if @gasto.categoria == categoria %>><%= h(categoria) %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="wt-field">
+            <label for="metodo_pago" class="wt-label">Método de pago</label>
+            <select id="metodo_pago" name="metodo_pago" class="wt-select">
+              <% Gasto::METODOS_PAGO.each do |metodo| %>
+                <option value="<%= h(metodo) %>" <%= 'selected' if @gasto.metodo_pago == metodo %>><%= h(metodo) %></option>
+              <% end %>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-lime-full">
+          <span>Registrar movimiento</span>
+          <span class="btn-arrow">↗</span>
+        </button>
+      </form>
     </div>
 
-    <% if @gasto.errors.any? %>
-      <div class="alert-box" role="alert">
-        <p class="alert-title">Revisa los siguientes campos:</p>
-        <ul class="alert-list">
-          <% @gasto.errors.each do |error| %>
-            <li><%= h(error) %></li>
-          <% end %>
-        </ul>
-      </div>
-    <% end %>
-
-    <form action="/gastos" method="post" class="wt-form" novalidate>
-      <input type="hidden" name="mes" value="<%= h(@mes) %>">
-
-      <div class="wt-field">
-        <label for="descripcion" class="wt-label">Descripción</label>
-        <input type="text" id="descripcion" name="descripcion" class="wt-input"
-               placeholder="Ej. Supermercado, recibo de luz..." maxlength="180"
-               value="<%= h(@gasto.descripcion) %>" required>
+    <!-- 2. Tarjeta Oscura Obsidian: Meta de Presupuesto Mensual (Estilo Wise / Mercury) -->
+    <% pct_presupuesto = porcentaje_num(@total, @presupuesto) %>
+    <% disponible = [@presupuesto - @total, 0.0].max %>
+    <div class="obsidian-budget-card">
+      <div class="budget-card-top">
+        <span class="showcase-label">META DE PRESUPUESTO</span>
+        <span class="budget-status-pill <%= @total > @presupuesto ? 'is-over' : 'is-ok' %>">
+          <%= @total > @presupuesto ? 'Excedido' : "#{pct_presupuesto}% usado" %>
+        </span>
       </div>
 
-      <div class="wt-field-row">
-        <div class="wt-field">
-          <label for="monto" class="wt-label">Monto ($)</label>
-          <input type="number" id="monto" name="monto" class="wt-input tabular-nums"
-                 placeholder="0.00" step="0.01" min="0.01"
-                 value="<%= h(monto_input(@gasto)) %>" required>
-        </div>
-        <div class="wt-field">
-          <label for="fecha" class="wt-label">Fecha</label>
-          <input type="date" id="fecha" name="fecha" class="wt-input tabular-nums"
-                 value="<%= h(@gasto.fecha) %>" required>
+      <div class="budget-figures tabular-nums">
+        <div>
+          <span class="budget-big"><%= moneda_editorial(@total) %></span>
+          <span class="budget-of">de <%= h(moneda(@presupuesto)) %></span>
         </div>
       </div>
 
-      <div class="wt-field">
-        <label for="categoria" class="wt-label">Categoría</label>
-        <select id="categoria" name="categoria" class="wt-select" required>
-          <% Gasto::CATEGORIAS.each do |categoria| %>
-            <option value="<%= h(categoria) %>" <%= 'selected' if @gasto.categoria == categoria %>><%= h(categoria) %></option>
-          <% end %>
-        </select>
+      <div class="budget-progress-track" aria-label="Progreso del presupuesto">
+        <div class="budget-progress-fill <%= 'is-danger' if @total > @presupuesto %>"
+             style="width: 0%"
+             data-width="<%= pct_presupuesto %>%"></div>
       </div>
 
-      <button type="submit" class="wt-btn-primary">Guardar gasto</button>
-    </form>
+      <p class="budget-caption tabular-nums">
+        <% if @total > @presupuesto %>
+          Has superado tu meta por <strong><%= h(moneda(@total - @presupuesto)) %></strong>.
+        <% else %>
+          Te quedan <strong><%= h(moneda(disponible)) %></strong> disponibles en este periodo.
+        <% end %>
+      </p>
 
+      <form action="/presupuesto" method="post" class="budget-edit-form">
+        <input type="hidden" name="mes" value="<%= h(@mes) %>">
+        <label for="input-presupuesto" class="sr-only">Actualizar meta mensual</label>
+        <input type="number" id="input-presupuesto" name="presupuesto_mensual"
+               class="budget-inline-input tabular-nums" step="50" min="50"
+               value="<%= h(format('%.0f', @presupuesto)) %>" placeholder="Meta $">
+        <button type="submit" class="budget-inline-btn">Ajustar meta</button>
+      </form>
+    </div>
+
+    <!-- 3. Historial rápido por mes -->
     <% if @totales_por_mes.any? %>
-      <div class="mini-month-summary">
-        <span class="wt-label">Total por mes</span>
+      <div class="transfer-card mini-history-card">
+        <span class="wt-label">Archivo mensual</span>
         <ul class="mini-month-list">
-          <% @totales_por_mes.first(4).each do |mes, total| %>
+          <% @totales_por_mes.first(5).each do |mes, total| %>
             <li>
               <a href="/?mes=<%= h(mes) %>" class="mini-month-link <%= 'is-current' if @mes == mes %>">
                 <span><%= h(nombre_mes(mes)) %></span>
@@ -81,16 +141,16 @@
     <% end %>
   </aside>
 
-  <!-- Columna derecha: resumen del mes + listado -->
-  <section class="details-drawer" aria-labelledby="drawer-heading">
+  <!-- COLUMNA DERECHA: Panel Bento de Telemetría + Gráfica de Categorías + Tabla -->
+  <section class="details-drawer animate-stagger-2" aria-labelledby="drawer-heading">
     <div class="drawer-header">
       <div>
-        <span class="eyebrow-label">Resumen financiero</span>
+        <span class="eyebrow-label">LIBRO MAYOR · LEDGER</span>
         <h1 id="drawer-heading" class="editorial-title"><%= h(nombre_mes(@mes)) %></h1>
       </div>
 
       <form action="/" method="get" class="month-filter-form">
-        <label for="mes-select" class="wt-label">Filtrar periodo</label>
+        <label for="mes-select" class="wt-label">Periodo activo</label>
         <div class="month-filter-controls">
           <select id="mes-select" name="mes" class="wt-select wt-select-compact" onchange="this.form.submit()">
             <option value="<%= Gasto::TODOS %>" <%= 'selected' if @mes == Gasto::TODOS %>>Todos los meses</option>
@@ -103,57 +163,123 @@
       </form>
     </div>
 
+    <!-- Bento Grid de 3 tarjetas con centavos en superíndice y odómetro -->
     <div class="bento-stats-grid">
       <article class="bento-card bento-card-highlight">
-        <span class="bento-label">Total <%= @mes == Gasto::TODOS ? 'global' : "de #{h(@mes)}" %></span>
-        <p class="bento-value tabular-nums"><%= h(moneda(@total)) %></p>
+        <div class="bento-card-head">
+          <span class="bento-label">Total <%= @mes == Gasto::TODOS ? 'acumulado' : "de #{h(@mes)}" %></span>
+          <span class="corner-arrow">↗</span>
+        </div>
+        <p class="bento-value tabular-nums"><%= moneda_editorial(@total) %></p>
         <span class="bento-pill"><%= @gastos.size %> <%= @gastos.size == 1 ? 'movimiento' : 'movimientos' %></span>
       </article>
 
       <article class="bento-card">
-        <span class="bento-label">Categoría principal</span>
-        <% if @desglose.any? %>
-          <% categoria_top, monto_top = @desglose.first %>
-          <p class="bento-value-sm"><%= h(categoria_top) %></p>
-          <span class="bento-meta tabular-nums"><%= h(moneda(monto_top)) %> (<%= porcentaje(monto_top, @total) %> del periodo)</span>
-        <% else %>
-          <p class="bento-value-sm">Sin datos</p>
-          <span class="bento-meta">Registra tu primer gasto</span>
-        <% end %>
+        <div class="bento-card-head">
+          <span class="bento-label">Promedio por día activo</span>
+          <span class="corner-arrow">◈</span>
+        </div>
+        <p class="bento-value tabular-nums"><%= moneda_editorial(@promedio_diario) %></p>
+        <span class="bento-meta">
+          <% if @mayor_gasto %>
+            Mayor: <strong><%= h(@mayor_gasto.descripcion[0, 22]) %></strong> (<%= h(moneda(@mayor_gasto.monto)) %>)
+          <% else %>
+            Sin movimientos registrados
+          <% end %>
+        </span>
       </article>
 
       <article class="bento-card">
-        <span class="bento-label">Desglose por categoría</span>
+        <div class="bento-card-head">
+          <span class="bento-label">Categoría dominante</span>
+          <span class="corner-arrow">✦</span>
+        </div>
         <% if @desglose.any? %>
-          <ul class="category-breakdown-list">
-            <% @desglose.first(3).each do |categoria, subtotal| %>
-              <li class="category-breakdown-item">
-                <span><%= h(categoria) %></span>
-                <span class="category-amount tabular-nums"><%= h(moneda(subtotal)) %></span>
-              </li>
-            <% end %>
-          </ul>
+          <% categoria_top, monto_top = @desglose.first %>
+          <p class="bento-value-sm"><%= h(icono_categoria(categoria_top)) %> <%= h(categoria_top) %></p>
+          <span class="bento-meta tabular-nums">
+            <%= h(moneda(monto_top)) %> · <strong><%= porcentaje(monto_top, @total) %></strong> del total
+          </span>
         <% else %>
-          <span class="bento-meta">No hay categorías en este periodo.</span>
+          <p class="bento-value-sm">Sin datos</p>
+          <span class="bento-meta">Añade tu primer gasto</span>
         <% end %>
       </article>
     </div>
 
+    <!-- Gráfica visual de barras animadas por categoría -->
+    <% if @desglose.any? %>
+      <div class="category-bars-card">
+        <div class="category-bars-header">
+          <span class="wt-label">Distribución visual por categoría</span>
+          <span class="category-bars-hint">Haz clic en una píldora abajo para filtrar la tabla</span>
+        </div>
+
+        <div class="category-bars-grid">
+          <% @desglose.each do |cat, subtotal| %>
+            <% pct = porcentaje_num(subtotal, @total) %>
+            <div class="cat-bar-item">
+              <div class="cat-bar-top">
+                <span class="cat-bar-name">
+                  <span class="cat-icon"><%= h(icono_categoria(cat)) %></span>
+                  <%= h(cat) %>
+                </span>
+                <span class="cat-bar-amount tabular-nums">
+                  <%= h(moneda(subtotal)) %> <small>(<%= pct %>%)</small>
+                </span>
+              </div>
+              <div class="cat-bar-track">
+                <div class="cat-bar-fill <%= badge_categoria(cat) %>" style="width: 0%" data-width="<%= pct %>%"></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Píldoras interactivas de filtro por categoría + buscador en vivo -->
+    <div class="filter-toolbar">
+      <div class="category-filter-pills" role="tablist" aria-label="Filtrar por categoría">
+        <a href="/?mes=<%= h(@mes) %>"
+           class="filter-pill <%= 'is-active' if @categoria_filtro.empty? %>">
+          Todas
+        </a>
+        <% Gasto::CATEGORIAS.each do |cat| %>
+          <a href="/?mes=<%= h(@mes) %>&categoria=<%= Rack::Utils.escape(cat) %>"
+             class="filter-pill <%= 'is-active' if @categoria_filtro == cat %>">
+            <span><%= h(icono_categoria(cat)) %></span>
+            <%= h(cat) %>
+          </a>
+        <% end %>
+      </div>
+
+      <div class="live-search-box">
+        <input type="search" id="live-expense-search" class="wt-input wt-input-search"
+               placeholder="Buscar concepto o método...">
+      </div>
+    </div>
+
+    <!-- Tabla de movimientos con efecto Spotlight estilo Mercury -->
     <div class="files-list-card">
       <div class="files-list-header">
         <div>
-          <h2 class="files-list-title">Movimientos registrados</h2>
-          <p class="files-list-subtitle">Ordenados por fecha descendente</p>
+          <h2 class="files-list-title">
+            Movimientos registrados
+            <% unless @categoria_filtro.empty? %>
+              <span class="filter-active-tag">· <%= h(@categoria_filtro) %> (<%= h(moneda(@total_filtrado)) %>)</span>
+            <% end %>
+          </h2>
+          <p class="files-list-subtitle">Ordenados por fecha descendente · Números tabulares</p>
         </div>
-        <% if @mes != Gasto::TODOS %>
-          <a href="/?mes=<%= Gasto::TODOS %>" class="wt-link-action">Ver todos los meses</a>
+        <% if @mes != Gasto::TODOS || !@categoria_filtro.empty? %>
+          <a href="/?mes=<%= Gasto::TODOS %>" class="wt-link-action">Limpiar filtros ✕</a>
         <% end %>
       </div>
 
       <% if @gastos.empty? %>
         <div class="empty-state">
-          <p class="empty-state-title">No hay gastos en este periodo</p>
-          <p class="empty-state-text">Añade uno desde la tarjeta de la izquierda o cambia el mes seleccionado.</p>
+          <p class="empty-state-title">No hay gastos que coincidan con este filtro</p>
+          <p class="empty-state-text">Registra un movimiento desde la tarjeta izquierda o selecciona otra categoría.</p>
         </div>
       <% else %>
         <div class="table-responsive">
@@ -161,19 +287,31 @@
             <thead>
               <tr>
                 <th>Fecha</th>
-                <th>Descripción</th>
+                <th>Concepto</th>
                 <th>Categoría</th>
+                <th>Método</th>
                 <th class="text-right">Monto</th>
                 <th class="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <% @gastos.each do |gasto| %>
-                <tr>
+                <tr class="ledger-row">
                   <td class="cell-date tabular-nums"><%= h(gasto.fecha) %></td>
-                  <td><span class="desc-primary"><%= h(gasto.descripcion) %></span></td>
-                  <td><span class="category-badge <%= badge_categoria(gasto.categoria) %>"><%= h(gasto.categoria) %></span></td>
-                  <td class="cell-amount text-right tabular-nums"><%= h(moneda(gasto.monto)) %></td>
+                  <td>
+                    <span class="desc-primary"><%= h(gasto.descripcion) %></span>
+                  </td>
+                  <td>
+                    <span class="category-badge <%= badge_categoria(gasto.categoria) %>">
+                      <%= h(icono_categoria(gasto.categoria)) %> <%= h(gasto.categoria) %>
+                    </span>
+                  </td>
+                  <td>
+                    <span class="method-pill"><%= h(gasto.metodo_pago) %></span>
+                  </td>
+                  <td class="cell-amount text-right tabular-nums">
+                    <%= moneda_editorial(gasto.monto) %>
+                  </td>
                   <td class="text-right">
                     <div class="action-group">
                       <a href="/gastos/<%= gasto.id %>/editar" class="wt-btn-ghost">Editar</a>

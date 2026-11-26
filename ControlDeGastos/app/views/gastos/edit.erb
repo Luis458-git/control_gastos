@@ -1,14 +1,14 @@
-<div class="edit-screen-wrapper">
+<div class="edit-screen-wrapper animate-stagger-1">
   <section class="transfer-card edit-focus-card" aria-labelledby="edit-card-title">
     <div class="edit-card-top">
-      <a href="/?mes=<%= h(Gasto.normalizar_mes(@gasto.mes)) %>" class="back-pill-link">← Volver al listado</a>
-      <span class="record-id-pill tabular-nums">ID #<%= @gasto.id %></span>
+      <a href="/?mes=<%= h(Gasto.normalizar_mes(@gasto.mes)) %>" class="back-pill-link">← Volver al libro</a>
+      <span class="record-id-pill tabular-nums">REGISTRO #<%= @gasto.id %></span>
     </div>
 
     <div class="transfer-card-header">
       <div>
-        <h1 id="edit-card-title" class="editorial-title-sm">Editar gasto</h1>
-        <p class="transfer-card-subtitle">Actualiza los datos del movimiento seleccionado</p>
+        <h1 id="edit-card-title" class="editorial-title-sm">Editar movimiento</h1>
+        <p class="transfer-card-subtitle">Actualiza el importe, categoría o método de pago</p>
       </div>
     </div>
 
@@ -27,7 +27,7 @@
       <input type="hidden" name="_method" value="PATCH">
 
       <div class="wt-field">
-        <label for="edit-descripcion" class="wt-label">Descripción</label>
+        <label for="edit-descripcion" class="wt-label">Concepto o comercio</label>
         <input type="text" id="edit-descripcion" name="descripcion" class="wt-input"
                maxlength="180" value="<%= h(@gasto.descripcion) %>" required>
       </div>
@@ -45,23 +45,34 @@
         </div>
       </div>
 
-      <div class="wt-field">
-        <label for="edit-categoria" class="wt-label">Categoría</label>
-        <select id="edit-categoria" name="categoria" class="wt-select" required>
-          <% Gasto::CATEGORIAS.each do |categoria| %>
-            <option value="<%= h(categoria) %>" <%= 'selected' if @gasto.categoria == categoria %>><%= h(categoria) %></option>
-          <% end %>
-        </select>
+      <div class="wt-field-row">
+        <div class="wt-field">
+          <label for="edit-categoria" class="wt-label">Categoría</label>
+          <select id="edit-categoria" name="categoria" class="wt-select" required>
+            <% Gasto::CATEGORIAS.each do |categoria| %>
+              <option value="<%= h(categoria) %>" <%= 'selected' if @gasto.categoria == categoria %>><%= h(categoria) %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="wt-field">
+          <label for="edit-metodo" class="wt-label">Método de pago</label>
+          <select id="edit-metodo" name="metodo_pago" class="wt-select">
+            <% Gasto::METODOS_PAGO.each do |metodo| %>
+              <option value="<%= h(metodo) %>" <%= 'selected' if @gasto.metodo_pago == metodo %>><%= h(metodo) %></option>
+            <% end %>
+          </select>
+        </div>
       </div>
 
       <div class="edit-metadata-row">
-        <span class="wt-label">Creado:</span>
+        <span class="wt-label">Fecha de creación:</span>
         <span class="tabular-nums"><%= h(@gasto.created_at) %></span>
       </div>
 
       <div class="edit-actions-row">
         <a href="/?mes=<%= h(Gasto.normalizar_mes(@gasto.mes)) %>" class="wt-btn-secondary">Cancelar</a>
-        <button type="submit" class="wt-btn-primary">Guardar cambios</button>
+        <button type="submit" class="btn-lime-full">Guardar cambios ↗</button>
       </div>
     </form>
   </section>

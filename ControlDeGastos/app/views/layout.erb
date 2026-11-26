@@ -3,30 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control de Gastos Personales</title>
+  <title>WeSpend — Editorial Personal Finance & Ledger</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/editorial.css">
 </head>
 <body>
+  <!-- Cinta superior de telemetría estilo Ramp -->
+  <div class="telemetry-topbar" aria-label="Estado del sistema en vivo">
+    <div class="telemetry-topbar-inner">
+      <span class="telemetry-badge">
+        <span class="pulse-lime"></span>
+        WESPEND LEDGER OS v2.4
+      </span>
+      <span class="telemetry-sep">·</span>
+      <span class="telemetry-item">MOTOR ACTIVO: <strong><%= Database.postgres? ? 'POSTGRESQL CLOUD' : 'SQLITE3 LOCAL' %></strong></span>
+      <span class="telemetry-sep">·</span>
+      <span class="telemetry-item tabular-nums">PRECISIÓN DECIMAL: <strong>100% TABULAR-NUMS</strong></span>
+      <span class="telemetry-sep hide-mobile">·</span>
+      <span class="telemetry-item hide-mobile tabular-nums">FECHA: <strong><%= h(Date.today.iso8601) %></strong></span>
+    </div>
+  </div>
+
   <div class="app-canvas">
-    <header class="top-bar">
-      <a href="/" class="brand-lockup" aria-label="Inicio">
-        <span class="brand-mark">wt</span>
+    <!-- Barra de navegación flotante estilo Wise + Mercury -->
+    <header class="top-bar animate-fade-down">
+      <a href="/welcome" class="brand-lockup" aria-label="Ir a portada WeSpend">
+        <span class="brand-mark">w<span class="brand-dot">.</span></span>
         <div class="brand-text">
-          <span class="brand-title">Control de Gastos</span>
-          <span class="brand-subtitle">Personal Ledger · Sinatra</span>
+          <span class="brand-title">WeSpend</span>
+          <span class="brand-subtitle">Editorial Finance</span>
         </div>
       </a>
 
-      <nav class="nav-pill" aria-label="Navegación">
-        <a href="/" class="nav-pill-item <%= 'is-active' if request.path_info == '/' %>">Movimientos</a>
+      <nav class="nav-pill" aria-label="Navegación principal">
+        <a href="/welcome" class="nav-pill-item <%= 'is-active' if request.path_info == '/welcome' %>">
+          Inicio
+        </a>
+        <a href="/" class="nav-pill-item <%= 'is-active' if request.path_info == '/' || request.path_info.start_with?('/gastos') %>">
+          Panel de Gastos
+        </a>
+
         <span class="nav-pill-divider" aria-hidden="true"></span>
-        <span class="nav-pill-meta">
-          <span class="status-dot"></span>
-          <%= Database.postgres? ? 'PostgreSQL' : 'SQLite3 Local' %>
-        </span>
+
+        <% if logged_in? %>
+          <div class="user-chip">
+            <span class="user-avatar"><%= h(current_user.iniciales) %></span>
+            <span class="user-name hide-mobile"><%= h(current_user.nombre) %></span>
+          </div>
+          <form action="/logout" method="post" class="inline-form">
+            <button type="submit" class="nav-pill-logout" title="Cerrar sesión">Salir</button>
+          </form>
+        <% else %>
+          <a href="/login" class="nav-pill-item <%= 'is-active' if request.path_info == '/login' %>">
+            Iniciar sesión
+          </a>
+          <a href="/registro" class="nav-cta-lime">
+            Crear cuenta ↗
+          </a>
+        <% end %>
       </nav>
     </header>
 
@@ -34,10 +70,74 @@
       <%= yield %>
     </main>
 
+    <!-- Dock inferior de telemetría inspirado en Ramp & Mercury -->
     <footer class="app-footer">
-      <span>Diseño inspirado en WeTransfer Web · Ruby + Sinatra + Puma</span>
-      <span class="tabular-nums">Hoy: <%= h(Date.today.iso8601) %></span>
+      <div class="footer-left">
+        <span class="footer-brand-pill">w.</span>
+        <span>Inspirado en <strong>Wise</strong>, <strong>Mercury</strong>, <strong>Ramp</strong> &amp; <strong>WeTransfer</strong> · Ruby + Sinatra + Puma</span>
+      </div>
+      <div class="footer-links">
+        <a href="/welcome">Página Principal</a>
+        <span>·</span>
+        <a href="/">Panel Financiero</a>
+        <span>·</span>
+        <% if logged_in? %>
+          <a href="/logout">Cerrar sesión (<%= h(current_user.email) %>)</a>
+        <% else %>
+          <a href="/login">Acceso Clientes</a>
+        <% end %>
+      </div>
     </footer>
   </div>
+
+  <!-- Micro-animaciones: contadores odómetro y barras de progreso al entrar en pantalla -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Animar barras de progreso y distribución
+      requestAnimationFrame(() => {
+        document.querySelectorAll('[data-width]').forEach((bar) => {
+          bar.style.width = bar.getAttribute('data-width');
+        });
+      });
+
+      // 2. Animar contadores numéricos tipo odómetro
+      document.querySelectorAll('[data-counter]').forEach((el) => {
+        const target = parseFloat(el.getAttribute('data-counter') || '0');
+        const prefix = el.getAttribute('data-prefix') || '';
+        const decimals = parseInt(el.getAttribute('data-decimals') || '2', 10);
+        if (isNaN(target) || target === 0) return;
+
+        const duration = 900;
+        const start = performance.now();
+
+        const formatNum = (n) => {
+          const parts = n.toFixed(decimals).split('.');
+          parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          return prefix + (decimals > 0 ? parts.join('.') : parts[0]);
+        };
+
+        const tick = (now) => {
+          const progress = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 4);
+          el.textContent = formatNum(target * eased);
+          if (progress < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+
+      // 3. Buscador rápido en vivo en la tabla del dashboard
+      const searchInput = document.getElementById('live-expense-search');
+      if (searchInput) {
+        const rows = document.querySelectorAll('.wt-table tbody tr');
+        searchInput.addEventListener('input', (e) => {
+          const term = e.target.value.toLowerCase().trim();
+          rows.forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? '' : 'none';
+          });
+        });
+      }
+    });
+  </script>
 </body>
 </html>

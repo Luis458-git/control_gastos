@@ -12,6 +12,7 @@ require 'rack/utils'
 APP_ROOT = File.expand_path('..', __dir__)
 
 require_relative 'database'
+require_relative '../app/models/usuario'
 require_relative '../app/models/gasto'
 require_relative '../app/helpers/application_helper'
 require_relative '../app/controllers/application_controller'

@@ -1,0 +1,187 @@
+<!-- PÁGINA PRINCIPAL / LANDING EDITORIAL (Inspirada en Wise, Mercury & Ramp) -->
+<section class="hero-section animate-stagger-1">
+  <div class="hero-grid">
+    <!-- Columna Izquierda: Tipografía de alto impacto y llamadas a la acción -->
+    <div class="hero-copy">
+      <div class="hero-eyebrow-pill">
+        <span class="eyebrow-tag">NUEVO</span>
+        <span>Arquitectura financiera personal con precisión editorial</span>
+      </div>
+
+      <h1 class="hero-display-title">
+        Tu dinero, con <span class="serif-italic">claridad</span> radical y sin ruido.
+      </h1>
+
+      <p class="hero-lead">
+        Olvídate de las hojas de cálculo grises. Registra cada movimiento en segundos, controla tu presupuesto mensual con barras vivas y analiza tus categorías con diseño inspirado en <strong>Wise</strong>, <strong>Mercury</strong> y <strong>Ramp</strong>.
+      </p>
+
+      <!-- Barra de acción unificada estilo Ramp / Mercury -->
+      <div class="hero-cta-group">
+        <a href="/" class="btn-lime-hero">
+          Abrir Panel de Gastos
+          <span class="btn-arrow">↗</span>
+        </a>
+
+        <% unless logged_in? %>
+          <form action="/demo" method="post" class="inline-form">
+            <button type="submit" class="btn-obsidian-hero">
+              Probar Cuenta Demo (1 clic)
+            </button>
+          </form>
+        <% end %>
+      </div>
+
+      <!-- Píldoras de confianza -->
+      <div class="hero-trust-row">
+        <div class="trust-stat">
+          <span class="trust-number tabular-nums" data-counter="<%= @conteo_historico %>" data-decimals="0"><%= @conteo_historico %></span>
+          <span class="trust-label">Movimientos activos</span>
+        </div>
+        <div class="trust-divider"></div>
+        <div class="trust-stat">
+          <span class="trust-number tabular-nums" data-counter="<%= @total_historico.round(2) %>" data-prefix="$" data-decimals="2"><%= h(moneda(@total_historico)) %></span>
+          <span class="trust-label">Volumen auditado</span>
+        </div>
+        <div class="trust-divider"></div>
+        <div class="trust-stat">
+          <span class="trust-number">Dual DB</span>
+          <span class="trust-label">SQLite3 + PostgreSQL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna Derecha: Tarjeta Flotante Interactiva estilo Mercury Obsidian + Wise Lime -->
+    <div class="hero-showcase animate-stagger-2">
+      <div class="obsidian-showcase-card">
+        <div class="showcase-top-row">
+          <div>
+            <span class="showcase-label">BALANCE MENSUAL AUDITADO</span>
+            <div class="showcase-amount tabular-nums">
+              <%= moneda_editorial(@total_historico.positive? ? @total_historico : 1248.65) %>
+            </div>
+          </div>
+          <span class="showcase-live-pill">
+            <span class="pulse-lime"></span> En vivo
+          </span>
+        </div>
+
+        <!-- Mini gráfica de barras apiladas estilo Mercury -->
+        <div class="showcase-meter-box">
+          <div class="showcase-meter-header">
+            <span>Distribución inteligente de presupuesto</span>
+            <span class="tabular-nums lime-text">74% óptimo</span>
+          </div>
+          <div class="showcase-multi-bar">
+            <span class="m-seg seg-lime" style="width: 38%" title="Alimentación"></span>
+            <span class="m-seg seg-emerald" style="width: 24%" title="Servicios"></span>
+            <span class="m-seg seg-amber" style="width: 18%" title="Salud"></span>
+            <span class="m-seg seg-coral" style="width: 12%" title="Ocio"></span>
+          </div>
+          <div class="showcase-legend">
+            <span><i class="dot-lime"></i> Alimentación</span>
+            <span><i class="dot-emerald"></i> Servicios</span>
+            <span><i class="dot-amber"></i> Salud</span>
+            <span><i class="dot-coral"></i> Ocio</span>
+          </div>
+        </div>
+
+        <!-- Filas interactivas con efecto spotlight -->
+        <div class="showcase-ledger-list">
+          <div class="showcase-ledger-row">
+            <div class="s-row-icon badge-food">✦</div>
+            <div class="s-row-info">
+              <span class="s-row-title">Supermercado orgánico y café</span>
+              <span class="s-row-meta">Alimentación · Tarjeta Crédito</span>
+            </div>
+            <span class="s-row-amount tabular-nums">-$94<sup>.50</sup></span>
+          </div>
+
+          <div class="showcase-ledger-row is-highlighted">
+            <div class="s-row-icon badge-services">⚡</div>
+            <div class="s-row-info">
+              <span class="s-row-title">Suscripción Fibra &amp; Cloud Pro</span>
+              <span class="s-row-meta">Servicios · Débito Automático</span>
+            </div>
+            <span class="s-row-amount tabular-nums">-$48<sup>.00</sup></span>
+          </div>
+
+          <div class="showcase-ledger-row">
+            <div class="s-row-icon badge-leisure">◈</div>
+            <div class="s-row-info">
+              <span class="s-row-title">Cine de autor y cena</span>
+              <span class="s-row-meta">Ocio · Tarjeta Crédito</span>
+            </div>
+            <span class="s-row-amount tabular-nums">-$44<sup>.90</sup></span>
+          </div>
+        </div>
+
+        <div class="showcase-footer-banner">
+          <span>🔒 Protegido con consultas SQL parametrizadas y sesiones firmadas</span>
+          <a href="/" class="showcase-link">Ir al libro →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CINTA ANIMADA (MARQUEE TICKER) ESTILO RAMP / WISE -->
+<div class="ticker-tape-wrapper" aria-hidden="true">
+  <div class="ticker-tape-track">
+    <span>✦ CONTROL DE PRESUPUESTO EN TIEMPO REAL</span>
+    <span>◈ ARQUITECTURA MVC RUBY + SINATRA + PUMA</span>
+    <span>⚡ PERSISTENCIA EN POSTGRESQL &amp; SQLITE3</span>
+    <span>↗ PRECISIÓN TABULAR CON CENTAVOS EDITORIALES</span>
+    <span>✚ FILTRADO INSTANTÁNEO POR MES Y CATEGORÍA</span>
+    <span>✦ CONTROL DE PRESUPUESTO EN TIEMPO REAL</span>
+    <span>◈ ARQUITECTURA MVC RUBY + SINATRA + PUMA</span>
+    <span>⚡ PERSISTENCIA EN POSTGRESQL &amp; SQLITE3</span>
+    <span>↗ PRECISIÓN TABULAR CON CENTAVOS EDITORIALES</span>
+  </div>
+</div>
+
+<!-- BENTO GRID DE CARACTERÍSTICAS CON FLECHAS MICRO-INTERACTIVAS -->
+<section class="landing-bento-section animate-stagger-3">
+  <div class="section-header-row">
+    <div>
+      <span class="eyebrow-label">INGENIERÍA &amp; ESTÉTICA</span>
+      <h2 class="editorial-title">Diseñado como una fintech moderna</h2>
+    </div>
+    <a href="/login" class="wt-btn-secondary">Iniciar sesión en tu cuenta ↗</a>
+  </div>
+
+  <div class="landing-bento-grid">
+    <article class="feature-bento-card card-lime-accent">
+      <div class="feature-card-top">
+        <span class="feature-tag">01 / PRESUPUESTO VIVO</span>
+        <span class="corner-arrow">↗</span>
+      </div>
+      <h3 class="feature-title">Medidor de meta mensual interactivo</h3>
+      <p class="feature-desc">
+        Define tu límite de gasto cada mes y observa en tiempo real cuánto presupuesto tienes disponible con alertas visuales automáticas al superar el 80%.
+      </p>
+    </article>
+
+    <article class="feature-bento-card card-obsidian-accent">
+      <div class="feature-card-top">
+        <span class="feature-tag">02 / TIPOGRAFÍA MERCURY</span>
+        <span class="corner-arrow">↗</span>
+      </div>
+      <h3 class="feature-title">Números tabulares y centavos en superíndice</h3>
+      <p class="feature-desc">
+        Cada cifra se alinea al píxel con <code>tabular-nums</code> y separa visualmente los centavos para que escanear decenas de gastos sea inmediato.
+      </p>
+    </article>
+
+    <article class="feature-bento-card">
+      <div class="feature-card-top">
+        <span class="feature-tag">03 / SEGURIDAD &amp; NUBE</span>
+        <span class="corner-arrow">↗</span>
+      </div>
+      <h3 class="feature-title">Cuentas personales y PostgreSQL en Render</h3>
+      <p class="feature-desc">
+        Inicia sesión con tu cuenta o entra con el modo Demo en un clic. Tus registros persisten en la nube con prevención de XSS y SQL Injection.
+      </p>
+    </article>
+  </div>
+</section>

@@ -1,0 +1,87 @@
+<!-- PANTALLA DE REGISTRO DE USUARIO -->
+<div class="edit-screen-wrapper animate-stagger-1">
+  <section class="transfer-card edit-focus-card" aria-labelledby="register-title">
+    <div class="edit-card-top">
+      <a href="/login" class="back-pill-link">← Ya tengo cuenta</a>
+      <span class="record-id-pill">NUEVO PERFIL</span>
+    </div>
+
+    <div class="auth-card-header">
+      <span class="eyebrow-label">COMIENZA AHORA</span>
+      <h1 id="register-title" class="editorial-title">Crear cuenta personal</h1>
+      <p class="transfer-card-subtitle">Configura tu perfil y tu meta de presupuesto mensual inicial.</p>
+    </div>
+
+    <% if @usuario.errors.any? %>
+      <div class="alert-box" role="alert">
+        <p class="alert-title">Revisa los siguientes datos:</p>
+        <ul class="alert-list">
+          <% @usuario.errors.each do |err| %>
+            <li><%= h(err) %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <form action="/registro" method="post" class="wt-form" novalidate>
+      <div class="wt-field">
+        <label for="reg-nombre" class="wt-label">Nombre completo</label>
+        <input
+          type="text"
+          id="reg-nombre"
+          name="nombre"
+          class="wt-input"
+          placeholder="Ej. Alejandro Rivera"
+          value="<%= h(@usuario.nombre) %>"
+          required
+        >
+      </div>
+
+      <div class="wt-field">
+        <label for="reg-email" class="wt-label">Correo electrónico</label>
+        <input
+          type="email"
+          id="reg-email"
+          name="email"
+          class="wt-input"
+          placeholder="tu@correo.com"
+          value="<%= h(@usuario.email) %>"
+          required
+        >
+      </div>
+
+      <div class="wt-field-row">
+        <div class="wt-field">
+          <label for="reg-password" class="wt-label">Contraseña</label>
+          <input
+            type="password"
+            id="reg-password"
+            name="password"
+            class="wt-input"
+            placeholder="Mínimo 4 caracteres"
+            required
+          >
+        </div>
+
+        <div class="wt-field">
+          <label for="reg-presupuesto" class="wt-label">Meta mensual ($)</label>
+          <input
+            type="number"
+            id="reg-presupuesto"
+            name="presupuesto_mensual"
+            class="wt-input tabular-nums"
+            step="10"
+            min="50"
+            value="<%= h(format('%.2f', @usuario.presupuesto_mensual)) %>"
+            required
+          >
+        </div>
+      </div>
+
+      <button type="submit" class="btn-lime-full">
+        <span>Crear cuenta e ir al Panel</span>
+        <span class="btn-arrow">↗</span>
+      </button>
+    </form>
+  </section>
+</div>

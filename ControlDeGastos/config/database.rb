@@ -20,7 +20,8 @@ module Database
     end
 
     def setup!
-      postgres? ? crear_tabla_postgres : crear_tabla_sqlite
+      postgres? ? crear_tablas_postgres : crear_tablas_sqlite
+      migrar_columnas_Existentes!
       execute('CREATE INDEX IF NOT EXISTS idx_gastos_fecha ON gastos (fecha DESC)')
     end
 
@@ -49,7 +50,6 @@ module Database
 
     private
 
-    # Puma usa varios hilos: una sola conexión compartida necesita exclusión mutua.
     def synchronize(&block)
       @mutex.owned? ? block.call : @mutex.synchronize(&block)
     end
@@ -82,30 +82,68 @@ module Database
       File.expand_path(relativo, APP_ROOT)
     end
 
-    def crear_tabla_postgres
+    def crear_tablas_postgres
+      execute(<<~SQL)
+        CREATE TABLE IF NOT EXISTS usuarios (
+          id                  SERIAL PRIMARY KEY,
+          nombre              VARCHAR(100)   NOT NULL,
+          email               VARCHAR(160)   NOT NULL UNIQUE,
+          password_hash       VARCHAR(255)   NOT NULL,
+          presupuesto_mensual NUMERIC(12, 2) NOT NULL DEFAULT 1500.00,
+          created_at          TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      SQL
+
       execute(<<~SQL)
         CREATE TABLE IF NOT EXISTS gastos (
           id          SERIAL PRIMARY KEY,
+          usuario_id  INTEGER,
           descripcion VARCHAR(180)   NOT NULL,
           monto       NUMERIC(12, 2) NOT NULL CHECK (monto > 0),
           categoria   VARCHAR(50)    NOT NULL,
+          metodo_pago VARCHAR(50)    NOT NULL DEFAULT 'Tarjeta',
           fecha       DATE           NOT NULL,
           created_at  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       SQL
     end
 
-    def crear_tabla_sqlite
+    def crear_tablas_sqlite
+      execute(<<~SQL)
+        CREATE TABLE IF NOT EXISTS usuarios (
+          id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre              TEXT NOT NULL,
+          email               TEXT NOT NULL UNIQUE,
+          password_hash       TEXT NOT NULL,
+          presupuesto_mensual REAL NOT NULL DEFAULT 1500.00,
+          created_at          TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+        )
+      SQL
+
       execute(<<~SQL)
         CREATE TABLE IF NOT EXISTS gastos (
           id          INTEGER PRIMARY KEY AUTOINCREMENT,
+          usuario_id  INTEGER,
           descripcion TEXT NOT NULL,
           monto       REAL NOT NULL CHECK (monto > 0),
           categoria   TEXT NOT NULL,
+          metodo_pago TEXT NOT NULL DEFAULT 'Tarjeta',
           fecha       TEXT NOT NULL,
           created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
         )
       SQL
+    end
+
+    # Si la tabla gastos ya existía de antes sin usuario_id o metodo_pago, las agrega sin perder datos.
+    def migrar_columnas_Existentes!
+      if postgres?
+        execute('ALTER TABLE gastos ADD COLUMN IF NOT EXISTS usuario_id INTEGER')
+        execute("ALTER TABLE gastos ADD COLUMN IF NOT EXISTS metodo_pago VARCHAR(50) NOT NULL DEFAULT 'Tarjeta'")
+      else
+        cols = query('PRAGMA table_info(gastos)').map { |c| c['name'] }
+        execute('ALTER TABLE gastos ADD COLUMN usuario_id INTEGER') unless cols.include?('usuario_id')
+        execute("ALTER TABLE gastos ADD COLUMN metodo_pago TEXT NOT NULL DEFAULT 'Tarjeta'") unless cols.include?('metodo_pago')
+      end
     end
 
     def to_pg_placeholders(sql)
@@ -118,7 +156,7 @@ module Database
         next unless clave.is_a?(String)
 
         resultado[clave] = case clave
-                           when 'monto' then valor.to_f
+                           when 'monto', 'presupuesto_mensual' then valor.to_f
                            when 'fecha', 'created_at' then valor.to_s
                            else valor
                            end
